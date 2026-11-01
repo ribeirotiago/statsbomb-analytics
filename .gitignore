@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Data (never version the StatsBomb clone or heavy derived files — see README)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+.env
+.streamlit/secrets.toml
+
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.vscode/
+.ipynb_checkpoints/
