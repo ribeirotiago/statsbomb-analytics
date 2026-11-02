@@ -2,8 +2,7 @@
 
 Exploratory analyses and visualizations (xT, xG, scouting, player similarity) built on
 [StatsBomb Open Data](https://github.com/statsbomb/open-data), covering the **2015/16** season of
-Europe's top 5 leagues. **Academic/portfolio project, non-commercial**, inspired by
-`atletico-analytics`.
+Europe's top 5 leagues. **Academic/portfolio project, non-commercial**.
 
 > Data: StatsBomb. Exploratory results.
 
