@@ -4,7 +4,7 @@
 - [x] Scaffold: pyproject, Ruff, pytest, GEMINI.md, `config.py`, `ingest/coverage.py`.
 - [x] Phase 1 — ETL: matches, teams, players, lineups, events → Parquet; DuckDB views
   ([docs/phase1_etl.md](docs/phase1_etl.md)). Merged into `main`.
-- [ ] Phase 2 — Metrics: per-90 by position, xG, xT, PPDA.
+- [ ] Phase 2 — Metrics ([docs/phase2_metrics.md](docs/phase2_metrics.md)): minutes, per-90, xG, xT, PPDA done and validated; next: xGChain/xGBuildup, action-based xT, VAEP and the model comparison.
 - [ ] Phase 3 — Streamlit app: League Explorer, Match Report, Shot Map, Pass Network, Scouting Radar.
 - [ ] Phase 4 — Similarity (k-NN → PCA/K-Means), documentation, deploy with an aggregated subset.
 
