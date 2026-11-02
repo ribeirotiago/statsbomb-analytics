@@ -13,3 +13,7 @@ data (StatsBomb clone, read-only)
 
 Code lives in `src/statsbomb_analytics/`. Reuse from `atletico-analytics`: xT grid/value iteration,
 percentiles and radar, k-NN/PCA/K-Means (adapting inputs to StatsBomb events).
+
+Storage: Parquet files are the single source of truth; DuckDB creates in-memory views over them
+(`storage/duckdb_store.py` is the single access point). No ORM: the data is static, columnar and
+read-only. See [docs/phase1_etl.md](docs/phase1_etl.md).

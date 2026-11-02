@@ -16,8 +16,13 @@ with only 1 match (the final)**, so it is excluded from aggregate analyses. No 3
 uv venv .venv && uv pip install -p .venv/bin/python -e ".[dev]"
 cp .env.example .env   # adjust STATSBOMB_DATA_DIR if needed
 ./.venv/bin/python scripts/phase0_coverage.py
+./.venv/bin/python scripts/phase1_etl.py   # Parquet in data/processed/ (git-ignored)
 ./.venv/bin/pytest
 ```
+
+## ETL (Phase 1)
+StatsBomb JSON → Parquet, queried with DuckDB (no ORM, no persisted database file). Details,
+tables and limitations: [docs/phase1_etl.md](docs/phase1_etl.md). Progress: [STATUS.md](STATUS.md).
 
 ## Limitations
 - Single season (no temporal evolution); small per-player samples; team style bias.
