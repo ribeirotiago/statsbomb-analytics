@@ -5,18 +5,13 @@ from __future__ import annotations
 import plotly.graph_objects as go
 import streamlit as st
 
-from common import methodology, require, setup_page
-from data_service import load_match_events, load_matches, match_label
+from common import match_picker, methodology, require, setup_page
+from data_service import load_match_events, load_matches
 
 setup_page("Match Report", "📋", "Score, xG race and team numbers for a single match")
 
 matches = require(load_matches(), "No matches found. Run the ETL (scripts/phase1_etl.py).")
-leagues = sorted(matches["competition_name"].unique())
-league = st.selectbox("Competition", leagues, index=0)
-pool = matches[matches["competition_name"] == league].reset_index(drop=True)
-labels = pool.apply(match_label, axis=1)
-choice = st.selectbox("Match", range(len(pool)), format_func=lambda i: labels.iloc[i])
-match = pool.iloc[choice]
+match, _ = match_picker(matches)
 
 events = load_match_events(int(match["match_id"]))
 shots = events[(events["type"] == "Shot") & (events["period"] < 5)].copy()

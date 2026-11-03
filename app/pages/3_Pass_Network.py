@@ -5,26 +5,24 @@ from __future__ import annotations
 import plotly.graph_objects as go
 import streamlit as st
 
-from common import methodology, require, setup_page
-from data_service import load_match_events, load_matches, match_label
+from common import match_picker, methodology, require, setup_page
+from data_service import load_match_events, load_matches
 from pitch import pitch_figure
 from statsbomb_analytics.metrics.pass_network import pass_network
 
 setup_page("Pass Network", "🕸️", "Average pass positions and links until the first substitution")
 
 matches = require(load_matches(), "No matches found. Run the ETL (scripts/phase1_etl.py).")
-col1, col2 = st.columns(2)
-league = col1.selectbox("Competition", sorted(matches["competition_name"].unique()))
-pool = matches[matches["competition_name"] == league].reset_index(drop=True)
-labels = pool.apply(match_label, axis=1)
-choice = col2.selectbox("Match", range(len(pool)), format_func=lambda i: labels.iloc[i])
-match = pool.iloc[choice]
+match, selected_team = match_picker(matches)
 
 team_options = {
     int(match["home_team_id"]): match["home_team"],
     int(match["away_team_id"]): match["away_team"],
 }
-team_id = st.radio("Team", list(team_options), format_func=team_options.get, horizontal=True)
+default_team = next((i for i, n in enumerate(team_options.values()) if n == selected_team), 0)
+team_id = st.radio(
+    "Team", list(team_options), index=default_team, format_func=team_options.get, horizontal=True
+)
 min_passes = st.slider("Minimum passes per link", 1, 10, 3)
 
 events = load_match_events(int(match["match_id"]))

@@ -31,8 +31,22 @@ def test_page_runs_without_exception(page: str) -> None:
 @pytest.mark.parametrize("group", ["FWD", "MID", "DEF"])
 def test_radar_runs_for_every_group_in_compare_mode(group: str) -> None:
     at = AppTest.from_file(str(APP_DIR / "pages/4_Scouting_Radar.py"), default_timeout=120).run()
-    at.selectbox[1].select(group).run()
-    at.checkbox[0].check().run()
+    at.selectbox[2].select(group).run()
+    at.toggle[0].set_value(True).run()
+    assert not at.exception, [e.value for e in at.exception]
+
+
+def test_radar_team_filter() -> None:
+    at = AppTest.from_file(str(APP_DIR / "pages/4_Scouting_Radar.py"), default_timeout=120).run()
+    team = at.selectbox[1].options[1]
+    at.selectbox[1].select(team).run()
+    assert not at.exception, [e.value for e in at.exception]
+
+
+def test_match_report_team_filter() -> None:
+    at = AppTest.from_file(str(APP_DIR / "pages/1_Match_Report.py"), default_timeout=120).run()
+    team = at.selectbox[1].options[1]
+    at.selectbox[1].select(team).run()
     assert not at.exception, [e.value for e in at.exception]
 
 

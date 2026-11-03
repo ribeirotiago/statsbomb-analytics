@@ -6,10 +6,35 @@ import pytest
 
 from statsbomb_analytics.metrics.player_metrics import add_completion_rates, team_competitions
 from statsbomb_analytics.metrics.scouting import (
-    RADAR_PROFILES,
+    CATEGORY_COLORS,
+    METRICS,
+    PCTILE_SUFFIX,
+    add_percentiles,
+    breakdown_table,
+    format_p90,
+    format_total,
     percentile_ranks,
-    radar_percentiles,
+    pizza_data,
 )
+
+
+def _pool() -> pd.DataFrame:
+    n = 4
+    data = {m.column: np.arange(1.0, n + 1) for m in METRICS}
+    data |= {m.total: np.arange(10.0, 10.0 * n + 1, 10.0) for m in METRICS if m.total}
+    data |= {
+        "passes_completed": [8.0, 9, 10, 11],
+        "passes": [10.0, 10, 10, 10],
+        "dribbles_completed": [1.0, 2, 3, 4],
+        "dribbles": [2.0, 4, 6, 8],
+        "player_name": list("abcd"),
+        "team_name": ["T"] * n,
+        "competition_name": ["L"] * n,
+        "primary_position": ["Center Back"] * n,
+        "position_group": ["DEF", "DEF", "FWD", "FWD"],
+        "minutes": [900.0] * n,
+    }
+    return pd.DataFrame(data)
 
 
 def test_percentile_ranks_span_zero_to_hundred() -> None:
@@ -24,17 +49,53 @@ def test_percentile_ranks_keep_nan() -> None:
     assert np.isnan(percentile_ranks(pool, ["a"])["a"].iloc[1])
 
 
-def test_radar_percentiles_use_profile_labels() -> None:
-    profile = RADAR_PROFILES["FWD"]
-    pool = pd.DataFrame({col: [1.0, 2.0, 3.0] for col in profile})
-    out = radar_percentiles(pool, "FWD")
-    assert list(out.columns) == list(profile.values())
-    assert out.iloc[2].eq(100.0).all()
+def test_every_metric_has_a_known_category() -> None:
+    assert {m.category for m in METRICS} <= set(CATEGORY_COLORS)
+    assert all(m.total or m.ratio for m in METRICS)
 
 
-def test_radar_percentiles_reject_goalkeepers() -> None:
-    with pytest.raises(KeyError):
-        radar_percentiles(pd.DataFrame({"a": [1.0]}), "GK")
+def test_add_percentiles_global_vs_by_group() -> None:
+    pool = _pool()
+    col = f"goals_p90{PCTILE_SUFFIX}"
+    overall = add_percentiles(pool)[col]
+    by_group = add_percentiles(pool, by_group=True)[col]
+    assert overall.iloc[-1] == pytest.approx(100.0)
+    assert overall.iloc[0] == pytest.approx(25.0)
+    # inside each 2-player group the best has 100 and the other 50
+    assert by_group.tolist() == [50.0, 100.0, 50.0, 100.0]
+
+
+def test_format_total_and_p90() -> None:
+    row = add_percentiles(_pool()).iloc[0]
+    by_col = {m.column: m for m in METRICS}
+    assert format_total(row, by_col["goals_p90"]) == "10"
+    assert format_total(row, by_col["pass_pct"]) == "8/10"
+    assert format_p90(row, by_col["pass_pct"]) == "1.0%"
+    assert format_p90(row, by_col["goals_p90"]) == "1.00"
+
+
+def test_format_total_missing_values() -> None:
+    metric = next(m for m in METRICS if m.column == "pass_pct")
+    row = pd.Series({"passes_completed": np.nan, "passes": 3})
+    assert format_total(row, metric) == "—"
+
+
+def test_pizza_data_skips_metrics_without_percentile() -> None:
+    pool = _pool()
+    pool.loc[0, "dribble_pct"] = np.nan
+    row = add_percentiles(pool).iloc[0]
+    data = pizza_data(row)
+    assert "Dribble %" not in data["params"]
+    assert len(data["params"]) == len(METRICS) - 1
+    assert len(data["values"]) == len(data["colors"]) == len(data["raw_totals"])
+    assert all(isinstance(v, int) for v in data["values"])
+
+
+def test_breakdown_table_matches_pizza() -> None:
+    row = add_percentiles(_pool()).iloc[2]
+    table = breakdown_table(row)
+    assert list(table.columns) == ["Dimension", "Metric", "Total", "Per 90", "Percentile"]
+    assert table["Metric"].tolist() == pizza_data(row)["params"]
 
 
 def test_team_competitions_ignores_champions_league() -> None:
