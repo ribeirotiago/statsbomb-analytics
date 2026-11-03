@@ -24,6 +24,14 @@ cp .env.example .env   # adjust STATSBOMB_DATA_DIR if needed
 StatsBomb JSON → Parquet, queried with DuckDB (no ORM, no persisted database file). Details,
 tables and limitations: [docs/phase1_etl.md](docs/phase1_etl.md). Progress: [STATUS.md](STATUS.md).
 
+## App (Phase 3)
+```bash
+./.venv/bin/python scripts/phase3_build_player_metrics.py   # builds the player table once
+./.venv/bin/streamlit run app/Home.py
+```
+Pages: Match Report, Shot Map, Pass Network, Scouting Radar, League Explorer. Details:
+[docs/phase3_app.md](docs/phase3_app.md).
+
 ## Limitations
 - Single season (no temporal evolution); small per-player samples; team style bias.
 - Cross-league comparisons are not calibrated (different teams and styles).

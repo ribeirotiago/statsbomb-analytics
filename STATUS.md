@@ -4,21 +4,17 @@
 - [x] Scaffold: pyproject, Ruff, pytest, GEMINI.md, `config.py`, `ingest/coverage.py`.
 - [x] Phase 1 — ETL: matches, teams, players, lineups, events → Parquet; DuckDB views
   ([docs/phase1_etl.md](docs/phase1_etl.md)). Merged into `main`.
-- [ ] Phase 2 — Metrics ([docs/phase2_metrics.md](docs/phase2_metrics.md)): minutes, per-90, xG, xT, PPDA done and validated; next: xGChain/xGBuildup, action-based xT, VAEP and the model comparison.
-- [ ] Phase 3 — Streamlit app: League Explorer, Match Report, Shot Map, Pass Network, Scouting Radar.
+- [x] Phase 2 — Metrics ([docs/phase2_metrics.md](docs/phase2_metrics.md)): minutes, per-90, xG, xT, PPDA, xGChain/xGBuildup, action-based xT, in-house VAEP and the method comparison (D16). Pending merge into `main`.
+- [ ] Phase 3 — Streamlit app ([docs/phase3_app.md](docs/phase3_app.md)): all five pages implemented and smoke-tested; pending visual review in the browser and polish.
 - [ ] Phase 4 — Similarity (k-NN → PCA/K-Means), documentation, deploy with an aggregated subset.
 
 ## Next session
 
-Branch: `feat/phase2-metrics` (decisions D1-D12 in [docs/phase2_metrics.md](docs/phase2_metrics.md)).
+Branch: `feat/phase3-app` (Phase 2 merged or pending merge into `main`).
 
-1. Commit the pending files (`action_xt.py`, `vaep.py`, their tests, docs, STATUS).
-2. ~~Action-based xT~~ done in `metrics/action_xt.py` (D14).
-3. ~~VAEP in-house~~ done in `metrics/vaep.py` (D15), out-of-fold by match.
-4. ~~Comparison table~~ done in `metrics/comparison.py` (D16, results in docs/phase2_metrics.md); outfield-only matrix included. Original item: comparison table of the four methods (Singh xT, xGChain/xGBuildup, action-based xT, VAEP):
-   Spearman correlation, players each method favours, analysis by position. Record D13+ in the
-   decision log (include the xGBuildup rules).
-5. Then `docs/phase2_metrics.md` wrap-up and Phase 3 (the UI minutes slider defaults to 300).
+1. Review the app visually (`./.venv/bin/streamlit run app/Home.py`) and polish layout.
+2. Add the Phase 3 section to the README (run instructions, credit already present).
+3. Phase 4: similarity (k-NN, then PCA/K-Means), deploy with an aggregated subset.
 
 ## Open points
 
