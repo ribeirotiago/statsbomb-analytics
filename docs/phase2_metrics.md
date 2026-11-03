@@ -21,6 +21,7 @@ always through `storage/duckdb_store.py`. Data: StatsBomb Open Data.
 | D12 | Baselines before ML: xT and xGChain/xGBuildup first, VAEP last. | Project rule (GEMINI.md §4). |
 | D13 | xGChain/xGBuildup: a player participates in a possession with a pass, carry, dribble or shot; xGBuildup ignores possessions where the player shot or made the key pass; penalties are excluded from the possession value. | Standard definitions; avoids crediting the fouled player for a penalty. |
 | D14 | Action-based xT (`metrics/action_xt.py`): P(possession ends in shot) from a degree-3 polynomial logistic regression on `x0, x1, c0, c1`, times E[xG] from a linear regression fitted on shot-ending actions. Split by match (80/20). Player value sums **successful** passes/carries. It is a *state value* (threat of the possession after the action), not a gain like Singh xT, so scales are not comparable: methods are compared by rank (Spearman). | Explainable baseline before VAEP; avoids leakage. |
+| D15 | VAEP (`metrics/vaep.py`) follows D11 with `HistGradientBoostingClassifier`. Values are **out-of-fold**: matches are split into 5 folds and each action is scored by a model that never saw its match. Previous state resets at period start and after a goal; own goals are not counted; the shootout is excluded. | Removes leakage from the player values, not only from the metrics. |
 
 References used for ideas only (code is rewritten for StatsBomb events):
 `football/soccermatics/4_valuingActions` (xT, possession chains, action-based xT) and
@@ -50,3 +51,9 @@ References used for ideas only (code is rewritten for StatsBomb events):
   decile). The model is weakly discriminative (geometry only), so values are smooth and mainly
   encode location. Top per 90 (min. 300 min): Verratti, Messi, Thiago Motta, Jorginho, Cazorla —
   deep/central creators and possession-team midfielders, as expected from the bias towards team style.
+- VAEP (5-fold by match, 2.9M actions): P(score) Brier 0.00798 vs 0.00948 baseline, AUC 0.830;
+  P(concede) Brier 0.00215 vs 0.00225, AUC 0.835. Calibration by decile is tight (top decile:
+  0.0529 predicted vs 0.0530 observed for scoring; 0.0138 vs 0.0139 for conceding). Top per 90
+  (min. 300 min): Bale, Totti, Ibrahimović, Jesé, Di María, Messi; bottom: low-involvement
+  forwards. Defensive value is led by goalkeepers (saves), while outfield defenders are close to
+  zero, which confirms the limitation that prevention leaves little trace in event data.
