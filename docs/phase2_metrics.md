@@ -19,6 +19,8 @@ always through `storage/duckdb_store.py`. Data: StatsBomb Open Data.
 | D10 | Possession chains use StatsBomb's `possession` id (plus `index`/`timestamp` for order). | Available in the open data; no heuristics needed. |
 | D11 | VAEP is implemented in-house with scikit-learn (no new dependency such as `socceraction`), SPADL-like features of the last 3 actions, two classifiers (score/concede within 10 actions). Train/test split **by match**, never by action. | Explainable methodology; avoids leakage. |
 | D12 | Baselines before ML: xT and xGChain/xGBuildup first, VAEP last. | Project rule (GEMINI.md §4). |
+| D13 | xGChain/xGBuildup: a player participates in a possession with a pass, carry, dribble or shot; xGBuildup ignores possessions where the player shot or made the key pass; penalties are excluded from the possession value. | Standard definitions; avoids crediting the fouled player for a penalty. |
+| D14 | Action-based xT (`metrics/action_xt.py`): P(possession ends in shot) from a degree-3 polynomial logistic regression on `x0, x1, c0, c1`, times E[xG] from a linear regression fitted on shot-ending actions. Split by match (80/20). Player value sums **successful** passes/carries. It is a *state value* (threat of the possession after the action), not a gain like Singh xT, so scales are not comparable: methods are compared by rank (Spearman). | Explainable baseline before VAEP; avoids leakage. |
 
 References used for ideas only (code is rewritten for StatsBomb events):
 `football/soccermatics/4_valuingActions` (xT, possession chains, action-based xT) and
@@ -43,3 +45,8 @@ References used for ideas only (code is rewritten for StatsBomb events):
   Di María); xGBuildup per 90 is led by centre-backs and midfielders (Boateng, Kimpembe,
   Kroos), as expected from the definition (D13: the shooter and key passer are excluded from
   xGBuildup; penalties are excluded from possession value).
+- Action-based xT (held-out matches, 579k actions): Brier 0.1198 vs 0.1265 for the constant
+  baseline, AUC 0.659, well calibrated by decile (e.g. predicted 0.344 vs observed 0.349 in the top
+  decile). The model is weakly discriminative (geometry only), so values are smooth and mainly
+  encode location. Top per 90 (min. 300 min): Verratti, Messi, Thiago Motta, Jorginho, Cazorla —
+  deep/central creators and possession-team midfielders, as expected from the bias towards team style.

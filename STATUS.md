@@ -10,13 +10,16 @@
 
 ## Next session
 
-1. Create branch `feat/phase2-metrics` from `main` (one branch per phase; commits by the user).
-2. Start with the simple metrics: per-90 by position (minutes from `lineup_positions`) and xG
-   aggregates (`shot_xg`); then xT and PPDA.
-3. Reuse from `atletico-analytics`: xT grid/value iteration, percentiles and radar.
-4. Each metric function needs a test in `tests/`; document assumptions and limitations.
-5. Access data only through `storage/duckdb_store.py`; regenerate Parquet with
-   `scripts/phase1_etl.py` if `data/processed/` is missing.
+Branch: `feat/phase2-metrics` (decisions D1-D12 in [docs/phase2_metrics.md](docs/phase2_metrics.md)).
+
+1. Commit the pending files (`action_xt.py`, its tests, docs, STATUS).
+2. ~~Action-based xT~~ done in `metrics/action_xt.py` (D14).
+3. VAEP in-house with scikit-learn (`metrics/vaep.py`): features of the last 3 actions, two
+   classifiers, split by match; validate with calibration and Brier score.
+4. Comparison table of the four methods (Singh xT, xGChain/xGBuildup, action-based xT, VAEP):
+   Spearman correlation, players each method favours, analysis by position. Record D13+ in the
+   decision log (include the xGBuildup rules).
+5. Then `docs/phase2_metrics.md` wrap-up and Phase 3 (the UI minutes slider defaults to 300).
 
 ## Open points
 
