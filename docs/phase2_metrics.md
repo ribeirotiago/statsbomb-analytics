@@ -22,6 +22,7 @@ always through `storage/duckdb_store.py`. Data: StatsBomb Open Data.
 | D13 | xGChain/xGBuildup: a player participates in a possession with a pass, carry, dribble or shot; xGBuildup ignores possessions where the player shot or made the key pass; penalties are excluded from the possession value. | Standard definitions; avoids crediting the fouled player for a penalty. |
 | D14 | Action-based xT (`metrics/action_xt.py`): P(possession ends in shot) from a degree-3 polynomial logistic regression on `x0, x1, c0, c1`, times E[xG] from a linear regression fitted on shot-ending actions. Split by match (80/20). Player value sums **successful** passes/carries. It is a *state value* (threat of the possession after the action), not a gain like Singh xT, so scales are not comparable: methods are compared by rank (Spearman). | Explainable baseline before VAEP; avoids leakage. |
 | D15 | VAEP (`metrics/vaep.py`) follows D11 with `HistGradientBoostingClassifier`. Values are **out-of-fold**: matches are split into 5 folds and each action is scored by a model that never saw its match. Previous state resets at period start and after a goal; own goals are not counted; the shootout is excluded. | Removes leakage from the player values, not only from the metrics. |
+| D16 | Comparison (`metrics/comparison.py`, `scripts/phase2_comparison.py`): per-90 values of the five columns (Singh xT, xGChain, xGBuildup, action-based xT, VAEP) for players with >= 300 min (2,189 players), compared by **Spearman rank correlation** overall and by position group (groups under 20 players skipped), mean percentile per group, top players and largest rank gaps. | Scales differ (D14), so only ranks are comparable. |
 
 References used for ideas only (code is rewritten for StatsBomb events):
 `football/soccermatics/4_valuingActions` (xT, possession chains, action-based xT) and
@@ -57,3 +58,43 @@ References used for ideas only (code is rewritten for StatsBomb events):
   (min. 300 min): Bale, Totti, Ibrahimović, Jesé, Di María, Messi; bottom: low-involvement
   forwards. Defensive value is led by goalkeepers (saves), while outfield defenders are close to
   zero, which confirms the limitation that prevention leaves little trace in event data.
+
+## Method comparison results (min. 300 min, per 90, 2,189 players)
+
+Spearman correlation (all positions, goalkeepers included; see the outfield-only matrix below):
+
+| | Singh xT | xGChain | xGBuildup | Action xT | VAEP |
+|---|---|---|---|---|---|
+| Singh xT | 1.00 | 0.47 | 0.47 | 0.57 | 0.45 |
+| xGChain | 0.47 | 1.00 | 0.65 | 0.71 | 0.28 |
+| xGBuildup | 0.47 | 0.65 | 1.00 | 0.68 | 0.25 |
+| Action xT | 0.57 | 0.71 | 0.68 | 1.00 | 0.25 |
+| VAEP | 0.45 | 0.28 | 0.25 | 0.25 | 1.00 |
+
+- **Volume/location methods agree with each other** (xGChain, xGBuildup, action xT: 0.65-0.71):
+  they all reward being involved in possessions that progress, hence the bias towards possession
+  teams. **VAEP is the outlier** (0.25-0.28 against them): it values the outcome-changing action
+  (shots, key passes, saves), not volume.
+- Favoured players differ by design: Singh xT -> wingers/attacking midfielders (Di María, Payet,
+  Özil); xGChain -> attackers (Totti, Neymar, Messi); xGBuildup -> centre-backs and holding
+  midfielders (Boateng, Kroos); action xT -> deep playmakers (Verratti, Thiago Motta, Jorginho);
+  VAEP -> finishers (Bale, Totti, Ibrahimović).
+- Mean percentile by position: VAEP ranks goalkeepers high (0.73, saves) while action xT ranks
+  them lowest (0.04); xGChain favours FWD (0.70) and action xT favours MID (0.68).
+- Within position groups the xG-based methods agree more (DEF xGChain/xGBuildup 0.93), and
+  VAEP stays the least correlated with the others (0.25-0.48).
+- **Outfield only** (2,030 players, goalkeepers excluded; `outfield_players`):
+
+  | | Singh xT | xGChain | xGBuildup | Action xT | VAEP |
+  |---|---|---|---|---|---|
+  | Singh xT | 1.00 | 0.44 | 0.46 | 0.55 | 0.53 |
+  | xGChain | 0.44 | 1.00 | 0.62 | 0.64 | 0.41 |
+  | xGBuildup | 0.46 | 0.62 | 1.00 | 0.66 | 0.34 |
+  | Action xT | 0.55 | 0.64 | 0.66 | 1.00 | 0.40 |
+  | VAEP | 0.53 | 0.41 | 0.34 | 0.40 | 1.00 |
+
+  Goalkeepers were distorting the overall matrix (VAEP rewards saves, the others ignore them).
+  Without them VAEP agrees more with the rest (0.34-0.53 vs 0.25-0.45), but it is still the
+  least correlated, and it is closest to Singh xT (0.53). The volume methods remain at 0.62-0.66.
+- Largest VAEP > action xT gaps are all goalkeepers; the reverse gaps are midfielders with high
+  passing volume but little end product (e.g. Leitner, Lemina, Fellaini).
