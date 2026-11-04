@@ -78,3 +78,12 @@ def test_valuation_comparison_include_goalkeepers() -> None:
     ).run()
     at.toggle[0].set_value(False).run()
     assert not at.exception, [e.value for e in at.exception]
+
+
+def test_similar_players_cosine_and_zscore_modes() -> None:
+    at = AppTest.from_file(str(APP_DIR / "pages/9_Similar_Players.py"), default_timeout=120).run()
+    assert not at.exception, [e.value for e in at.exception]
+    # Switch Distance Metric to 'cosine' and Feature Space to 'zscore'
+    at.selectbox[4].select("cosine").run()
+    at.selectbox[5].select("zscore").run()
+    assert not at.exception, [e.value for e in at.exception]

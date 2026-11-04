@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from data_service import match_label
+from data_service import load_event_match_ids, match_label
 from statsbomb_analytics.selection import matches_with_team, team_names
 
 CREDIT = "Data: StatsBomb (Open Data, 2015/16). Academic, non-commercial project."
@@ -41,7 +41,17 @@ def match_picker(matches: pd.DataFrame) -> tuple[pd.Series, str]:
     """Competition -> team -> match selectors. Returns the match and the chosen team name.
 
     The team selector keeps only the matches in which the team played; `ALL_TEAMS` keeps all.
+    When running on a lightweight deploy subset (`events/` has fewer files than `matches`),
+    only matches with event files present on disk are offered.
     """
+    event_ids = load_event_match_ids()
+    total_count = len(matches)
+    if 0 < len(event_ids) < total_count:
+        matches = matches[matches["match_id"].isin(event_ids)].reset_index(drop=True)
+        st.caption(
+            f"📦 Lightweight deploy subset active: **{len(matches)}** featured matches with full "
+            f"event streams available (out of **{total_count:,}** season matches)."
+        )
     col1, col2, col3 = st.columns([1, 1, 2])
     league = col1.selectbox("Competition", sorted(matches["competition_name"].unique()))
     pool = matches[matches["competition_name"] == league].reset_index(drop=True)

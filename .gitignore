@@ -9,6 +9,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/deploy_subset/
 
 .env
 .streamlit/secrets.toml

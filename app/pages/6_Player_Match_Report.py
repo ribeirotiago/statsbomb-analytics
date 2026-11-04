@@ -9,6 +9,7 @@ import streamlit as st
 from common import ALL_TEAMS, methodology, require, setup_page
 from data_service import (
     MISSING_METRICS,
+    load_event_match_ids,
     load_match_events,
     load_player_match_metrics,
     load_xt_grid,
@@ -32,6 +33,14 @@ setup_page(
 )
 
 match_table = require(load_player_match_metrics(), MISSING_METRICS)
+event_ids = load_event_match_ids()
+total_matches = match_table["match_id"].nunique()
+if 0 < len(event_ids) < total_matches:
+    match_table = match_table[match_table["match_id"].isin(event_ids)].reset_index(drop=True)
+    st.caption(
+        f"📦 Lightweight deploy subset active: **{len(event_ids)}** featured matches with full "
+        f"pitch event streams available (out of **{total_matches:,}** season matches)."
+    )
 
 col1, col2, col3, col4 = st.columns([1.3, 1.4, 1.8, 2.2])
 leagues = sorted(match_table["competition_name"].dropna().unique())

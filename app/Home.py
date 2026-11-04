@@ -33,6 +33,9 @@ def overview_page() -> None:
           game, plus pass/carry and offensive/defensive decompositions.
         - **Scouting Radar**: 19-slice 4-dimension `Barpolar` pizza profile against positional
           peers, with 1x1 head-to-head comparison and a `ProgressColumn` breakdown table.
+        - **Similar Players & Profiles**: baseline-first **Euclidean & Cosine k-NN** similarity with
+          1x1 pizza overlay and attribute delta breakdown, **7 domain tactical archetypes**, and
+          exploratory **PCA biplot & K-Means clustering** (Silhouette, Elbow, ARI/NMI agreement).
         - **Shot Map & Finishing**: season shots on the pitch by league, team or player
           (`Goals - xG`).
 
@@ -85,6 +88,11 @@ pg = st.navigation(
                 icon="📈",
             ),
             st.Page("pages/4_Scouting_Radar.py", title="Scouting Radar", icon="🧭"),
+            st.Page(
+                "pages/9_Similar_Players.py",
+                title="Similar Players & Profiles",
+                icon="🧬",
+            ),
             st.Page("pages/2_Shot_Map.py", title="Shot Map & Finishing", icon="🎯"),
         ],
         "Season Analysis": [

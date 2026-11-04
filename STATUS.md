@@ -8,42 +8,35 @@
   xT, PPDA, xGChain/xGBuildup, action-based xT, in-house out-of-fold VAEP and the method comparison
   (D1–D16). Merged into `main`.
 - [x] Phase 3 — Streamlit app ([docs/phase3_app.md](docs/phase3_app.md)): hierarchical
-  `st.navigation` across **Match Analysis** (enhanced Match Report with PPDA, Shot Map/Table tabs &
-  5-column Top 3 contributor cards per valuation method; Pass Network), **Player Analysis** (Player
-  Match Report with 5 tactical pitch maps, Player Match Log & Valuation trajectory, Scouting Radar,
-  Shot Map & Finishing) and **Season Analysis** (Action Valuation Comparison, League Explorer);
-  prebuilt `player_metrics.parquet`, `player_match_metrics.parquet` and `xt_grid.npy`; smoke-tested
-  with `AppTest` (D17–D25). Branch `feat/phase3-app`.
-- [ ] Phase 4 — Similarity (k-NN → PCA/K-Means), documentation, deploy with an aggregated subset.
+  `st.navigation` across **Match Analysis**, **Player Analysis** and **Season Analysis**;
+  prebuilt `player_metrics.parquet`, `player_match_metrics.parquet`, `shots.parquet` and
+  `xt_grid.npy`; smoke-tested with `AppTest` (D17–D25). Merged into `main`.
+- [x] Phase 4 — Similarity, Tactical Archetypes, Exploratory ML & Lightweight Deploy Subset
+  ([docs/phase4_similarity.md](docs/phase4_similarity.md)): Euclidean & Cosine k-NN baseline
+  (`find_similar_players`, `metric_deltas`), 7 domain tactical archetypes (`score_archetypes`),
+  PCA biplot (`fit_pca_profile`), K-Means clustering with Silhouette/Elbow and ARI/NMI agreement
+  diagnostics (`evaluate_kmeans_range`, `fit_kmeans_clusters`), `Similar Players & Profiles` page
+  (`app/pages/9_Similar_Players.py`), lightweight ~12 MB deploy subset builder
+  (`src/statsbomb_analytics/storage/deploy.py`, `scripts/phase4_build_deploy_subset.py`), and
+  complete portfolio `README.md` (D26–D31). Ready to merge into `main`.
 
 ## Last session summary (2026-11-04)
 
-1. Reorganised the Streamlit app into three analytical sections (`Match Analysis`,
-   `Player Analysis`, `Season Analysis`) using `st.navigation` in `app/Home.py` (D22).
-2. Added `metrics/player_match.py` (`tests/test_metrics_player_match.py`) and extended
-   `scripts/phase3_build_player_metrics.py` (`build_all_app_artifacts`) to build
-   `player_metrics.parquet` (2,770 rows), `player_match_metrics.parquet` (50,606 player-match
-   appearances) and `xt_grid.npy` (12×16) in a single pass.
-3. Enhanced `Match Report` (`app/pages/1_Match_Report.py`, D23) with match PPDA, `Pitch Map` /
-   `Shot Table` tabs and a 5-column card layout listing the **Top 3 Contributors per Team** across
-   `Singh xT`, `xGChain`, `xGBuildup`, `Action xT` and `VAEP`.
-4. Built `Player Match Report` (`app/pages/6_Player_Match_Report.py`, `app/match_plots.py`, D24)
-   with 5-model match KPIs, 4-column stat breakdown and 5 tactical pitch maps (`xT Gain`, `xT Loss`
-   with turnover cost, `Shots`, `Defensive Actions` with `xTP`, and `KDE Touch Heatmap`).
-5. Built `Player Match Log & Valuation` (`app/pages/7_Player_Match_Log.py`, D25) and
-   `Action Valuation Comparison` (`app/pages/8_Valuation_Comparison.py`, D25), and added mean
-   quadrant lines to `League Explorer` (`app/pages/5_League_Explorer.py`). Test suite at 106 passed.
-
-## Next session
-
-Branch: `feat/phase3-app`.
-
-1. Finish any remaining visual review of the Phase 3 pages (`uv run streamlit run app/Home.py`),
-   then merge `feat/phase3-app` into `main`.
-2. Start Phase 4 on a new branch (`feat/phase4-similarity`):
-   - Add a `Similar Players & Profiles` page inside the **Player Analysis** section:
-     - Explainable baseline first: Euclidean / cosine k-NN on percentiles / standardised per-90
-       features, with position-group and minimum-minutes filters plus 1x1 pizza overlay.
-     - Role/archetype scoring and exploratory ML next: PCA projection (biplot + loadings) and
-       K-Means clustering (Silhouette, elbow, ARI/NMI agreement vs position/archetypes).
-   - Prepare a lightweight aggregated subset for deployment and finalise documentation.
+1. Merged Phase 3 (`feat/phase3-app`) into `main` and completed Phase 4 on `feat/phase4-similarity`.
+2. Implemented `src/statsbomb_analytics/metrics/similarity.py` (`tests/test_metrics_similarity.py`)
+   following a baseline-first progression (D26–D30):
+   - **k-NN baseline (`find_similar_players`, `metric_deltas`)**: Euclidean and Cosine similarity
+     over the 19 scouting metrics in either `percentiles` (0–100) or standardised `zscore` space.
+   - **Domain Tactical Archetypes (`ARCHETYPES`, `score_archetypes`, `player_archetype_profile`)**:
+     7 transparent rule-based tactical roles scored as weighted averages of percentiles.
+   - **Exploratory ML (`fit_pca_profile`, `evaluate_kmeans_range`, `fit_kmeans_clusters`)**: 3D PCA
+     projection with biplot loading vectors, plus K-Means clustering evaluated across $k = 2 \dots 8$
+     via Inertia, Silhouette, ARI and NMI against `position_group` and `archetype`.
+3. Added `Similar Players & Profiles` (`app/pages/9_Similar_Players.py`) to the **Player Analysis**
+   section in `app/Home.py`.
+4. Added lightweight deployment bundle support (`src/statsbomb_analytics/storage/deploy.py`,
+   `scripts/phase4_build_deploy_subset.py`, `tests/test_deploy_subset.py`, D31), prebuilt
+   `shots.parquet` support in `app/data_service.py`, automatic partial-event-tree detection in
+   `app/common.py` and `app/pages/6_Player_Match_Report.py`, and expanded `README.md` into a full
+   portfolio showcase.
+5. Full test suite at **120 passed** and Ruff check/format clean.
