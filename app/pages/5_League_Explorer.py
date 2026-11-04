@@ -25,14 +25,19 @@ METRICS: dict[str, str] = {
     "pressures_p90": "Pressures / 90",
     "ball_recoveries_p90": "Ball recoveries / 90",
     "xt_p90": "Singh xT / 90",
+    "xt_pass_p90": "Singh xT (Passes) / 90",
+    "xt_carry_p90": "Singh xT (Carries) / 90",
     "xgchain_p90": "xGChain / 90",
     "xgbuildup_p90": "xGBuildup / 90",
     "axt_p90": "Action xT / 90",
     "vaep_p90": "VAEP / 90",
+    "vaep_offensive_p90": "VAEP (Offensive) / 90",
+    "vaep_defensive_p90": "VAEP (Defensive) / 90",
     "minutes": "Minutes",
 }
 
 table = require(load_player_metrics(), MISSING_METRICS)
+available_metrics = {k: v for k, v in METRICS.items() if k in table.columns}
 
 col1, col2, col3 = st.columns([2, 2, 3])
 league = col1.selectbox(
@@ -53,11 +58,18 @@ df = require(df, "No players for the selected filters.")
 st.caption(f"{len(df)} players")
 
 col_x, col_y, col_c = st.columns(3)
+metric_keys = list(available_metrics)
 x_col = col_x.selectbox(
-    "X axis", list(METRICS), index=list(METRICS).index("xt_p90"), format_func=METRICS.get
+    "X axis",
+    metric_keys,
+    index=metric_keys.index("xt_p90"),
+    format_func=available_metrics.get,
 )
 y_col = col_y.selectbox(
-    "Y axis", list(METRICS), index=list(METRICS).index("vaep_p90"), format_func=METRICS.get
+    "Y axis",
+    metric_keys,
+    index=metric_keys.index("vaep_p90"),
+    format_func=available_metrics.get,
 )
 color_by = col_c.selectbox("Color by", ["position_group", "competition_name", "team_name"])
 
@@ -68,18 +80,23 @@ fig = px.scatter(
     color=color_by,
     hover_name="player_name",
     hover_data={"team_name": True, "minutes": ":.0f", x_col: ":.2f", y_col: ":.2f"},
-    labels=METRICS | {"position_group": "Group", "competition_name": "League", "team_name": "Team"},
+    labels=available_metrics
+    | {"position_group": "Group", "competition_name": "League", "team_name": "Team"},
     template="plotly_dark",
     height=560,
 )
 fig.update_traces(marker={"size": 7, "opacity": 0.7})
+mean_x = float(df[x_col].mean())
+mean_y = float(df[y_col].mean())
+fig.add_vline(x=mean_x, line_dash="dash", line_color="gray", opacity=0.5)
+fig.add_hline(y=mean_y, line_dash="dash", line_color="gray", opacity=0.5)
 st.plotly_chart(fig, width="stretch")
 
 st.subheader("Player table")
 shown = ["player_name", "team_name", "competition_name", "primary_position", "matches", "minutes"]
-shown += [c for c in METRICS if c != "minutes"]
+shown += [c for c in available_metrics if c != "minutes"]
 column_config = {
-    c: st.column_config.NumberColumn(label, format="%.2f") for c, label in METRICS.items()
+    c: st.column_config.NumberColumn(label, format="%.2f") for c, label in available_metrics.items()
 }
 column_config["minutes"] = st.column_config.NumberColumn("Minutes", format="%.0f")
 column_config["player_name"] = st.column_config.TextColumn("Player")
@@ -97,6 +114,8 @@ st.dataframe(
 methodology(
     """
     - Per-90 rates are inflated by small samples: raise the minutes slider before ranking.
+    - Dashed lines on the scatter indicate the sample mean along each axis, dividing the chart
+      into four performance quadrants.
     - Singh xT is a **gain** (successful pass/carry moves the ball to a more valuable zone);
       action xT is a **state value** (threat of the possession after the action); VAEP is the
       change in P(score) minus the change in P(concede) over the next 10 actions (out-of-fold).

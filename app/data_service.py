@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
 from statsbomb_analytics.config import get_settings
-from statsbomb_analytics.metrics.player_metrics import PLAYER_METRICS_FILE
+from statsbomb_analytics.metrics.player_metrics import (
+    PLAYER_MATCH_METRICS_FILE,
+    PLAYER_METRICS_FILE,
+    XT_GRID_FILE,
+)
 from statsbomb_analytics.storage.duckdb_store import query
 
 MISSING_METRICS = (
-    "Player table not found. Build it once with "
-    "`./.venv/bin/python scripts/phase3_build_player_metrics.py` (takes a few minutes)."
+    "Player tables not found. Build them once with "
+    "`uv run python scripts/phase3_build_player_metrics.py` (takes a few minutes)."
 )
 
 MATCHES_SQL = """
@@ -48,6 +53,20 @@ def load_player_metrics() -> pd.DataFrame | None:
     """Player table with per-90 values and the five valuation methods (None if not built)."""
     path = get_settings().processed_dir / PLAYER_METRICS_FILE
     return pd.read_parquet(path) if path.exists() else None
+
+
+@st.cache_data(show_spinner=False)
+def load_player_match_metrics() -> pd.DataFrame | None:
+    """Per-match player table with minutes, basic stats and all five valuation methods."""
+    path = get_settings().processed_dir / PLAYER_MATCH_METRICS_FILE
+    return pd.read_parquet(path) if path.exists() else None
+
+
+@st.cache_resource(show_spinner=False)
+def load_xt_grid() -> np.ndarray | None:
+    """Pre-fitted 12x16 Singh xT grid (None if not built)."""
+    path = get_settings().processed_dir / XT_GRID_FILE
+    return np.load(path) if path.exists() else None
 
 
 @st.cache_data(show_spinner=False)

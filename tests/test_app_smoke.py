@@ -9,7 +9,10 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 from statsbomb_analytics.config import get_settings
-from statsbomb_analytics.metrics.player_metrics import PLAYER_METRICS_FILE
+from statsbomb_analytics.metrics.player_metrics import (
+    PLAYER_MATCH_METRICS_FILE,
+    PLAYER_METRICS_FILE,
+)
 
 APP_DIR = Path(__file__).parents[1] / "app"
 # `streamlit run app/Home.py` puts `app/` on the path; AppTest does not.
@@ -17,7 +20,8 @@ sys.path.insert(0, str(APP_DIR))
 PAGES = ["Home.py"] + [f"pages/{p.name}" for p in sorted((APP_DIR / "pages").glob("*.py"))]
 
 pytestmark = pytest.mark.skipif(
-    not (get_settings().processed_dir / PLAYER_METRICS_FILE).exists(),
+    not (get_settings().processed_dir / PLAYER_METRICS_FILE).exists()
+    or not (get_settings().processed_dir / PLAYER_MATCH_METRICS_FILE).exists(),
     reason="processed data not built",
 )
 
@@ -57,4 +61,20 @@ def test_pass_network_for_second_team() -> None:
     first = matches[matches["competition_name"] == "1. Bundesliga"].iloc[0]
     at = AppTest.from_file(str(APP_DIR / "pages/3_Pass_Network.py"), default_timeout=120).run()
     at.radio[0].set_value(int(first["away_team_id"])).run()
+    assert not at.exception, [e.value for e in at.exception]
+
+
+def test_player_match_report_static_mpl_mode() -> None:
+    at = AppTest.from_file(
+        str(APP_DIR / "pages/6_Player_Match_Report.py"), default_timeout=120
+    ).run()
+    at.toggle[0].set_value(False).run()
+    assert not at.exception, [e.value for e in at.exception]
+
+
+def test_valuation_comparison_include_goalkeepers() -> None:
+    at = AppTest.from_file(
+        str(APP_DIR / "pages/8_Valuation_Comparison.py"), default_timeout=120
+    ).run()
+    at.toggle[0].set_value(False).run()
     assert not at.exception, [e.value for e in at.exception]
