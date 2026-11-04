@@ -24,13 +24,17 @@ uv run pytest
 StatsBomb JSON → Parquet, queried with DuckDB (no ORM, no persisted database file). Details,
 tables and limitations: [docs/phase1_etl.md](docs/phase1_etl.md). Progress: [STATUS.md](STATUS.md).
 
-## App (Phase 3)
+## App & Similarity (Phases 3–4)
 ```bash
-uv run python scripts/phase3_build_player_metrics.py   # builds the player table once
+uv run python scripts/phase3_build_player_metrics.py   # builds season & match player tables once
 uv run streamlit run app/Home.py
 ```
-Pages: Match Report, Shot Map, Pass Network, Scouting Radar, League Explorer. Details:
-[docs/phase3_app.md](docs/phase3_app.md).
+Sections and pages:
+- **Match Analysis**: Match Report (with PPDA, Shot Map/Table tabs & Top 3 contributors across 5 valuation models), Pass Network.
+- **Player Analysis**: Player Match Report (5 tactical pitch maps), Player Match Log & Valuation, Scouting Radar (19-slice `Barpolar` pizza), Similar Players & Profiles (Euclidean/Cosine k-NN, 7 tactical archetypes, PCA biplot & K-Means), Shot Map & Finishing.
+- **Season Analysis**: Action Valuation Comparison (Singh xT, xGChain, xGBuildup, Action xT, out-of-fold VAEP), League Explorer.
+
+Details: [docs/phase2_metrics.md](docs/phase2_metrics.md), [docs/phase3_app.md](docs/phase3_app.md) and [docs/phase4_similarity.md](docs/phase4_similarity.md).
 
 ## Limitations
 - Single season (no temporal evolution); small per-player samples; team style bias.
