@@ -36,18 +36,36 @@ from statsbomb_analytics.storage.duckdb_store import query
 KEY = ["team_id", "player_id"]
 EXCLUDED_COMPETITIONS = ("Champions League",)
 PLAYER_METRICS_FILE = "player_metrics.parquet"
+SHOTS_FILE = "shots.parquet"
+
+SHOTS_APP_SQL = """
+SELECT e.match_id, e.team_id, e.player_id, p.player_name, t.team_name, e.minute, e.x, e.y,
+       e.shot_xg, e.shot_outcome, e.shot_type, e.shot_body_part, e.shot_technique
+FROM events e
+LEFT JOIN players p ON p.player_id = e.player_id
+LEFT JOIN teams t ON t.team_id = e.team_id
+WHERE e.type = 'Shot' AND e.period < 5
+"""
 
 __all__ = [
     "EXCLUDED_COMPETITIONS",
     "KEY",
     "PLAYER_MATCH_METRICS_FILE",
     "PLAYER_METRICS_FILE",
+    "SHOTS_APP_SQL",
+    "SHOTS_FILE",
     "XT_GRID_FILE",
     "add_completion_rates",
     "build_all_app_artifacts",
     "build_player_metrics",
+    "build_shots_table",
     "team_competitions",
 ]
+
+
+def build_shots_table(processed_dir: Path) -> pd.DataFrame:
+    """All season shots (excluding period 5 penalty shootouts) for the Shot Map page."""
+    return query(processed_dir, SHOTS_APP_SQL)
 
 
 def team_competitions(matches: pd.DataFrame) -> pd.DataFrame:

@@ -10,8 +10,11 @@ from statsbomb_analytics.config import get_settings
 from statsbomb_analytics.metrics.player_metrics import (
     PLAYER_MATCH_METRICS_FILE,
     PLAYER_METRICS_FILE,
+    SHOTS_APP_SQL,
+    SHOTS_FILE,
     XT_GRID_FILE,
 )
+from statsbomb_analytics.storage.deploy import available_event_match_ids
 from statsbomb_analytics.storage.duckdb_store import query
 
 MISSING_METRICS = (
@@ -38,14 +41,13 @@ WHERE e.match_id = ?
 ORDER BY e.index
 """
 
-SHOTS_SQL = """
-SELECT e.match_id, e.team_id, e.player_id, p.player_name, t.team_name, e.minute, e.x, e.y,
-       e.shot_xg, e.shot_outcome, e.shot_type, e.shot_body_part, e.shot_technique
-FROM events e
-LEFT JOIN players p ON p.player_id = e.player_id
-LEFT JOIN teams t ON t.team_id = e.team_id
-WHERE e.type = 'Shot' AND e.period < 5
-"""
+SHOTS_SQL = SHOTS_APP_SQL
+
+
+@st.cache_data(show_spinner=False)
+def load_event_match_ids() -> frozenset[int]:
+    """Set of `match_id` integers that have an `events` partition file on disk."""
+    return frozenset(available_event_match_ids(get_settings().processed_dir))
 
 
 @st.cache_data(show_spinner=False)
@@ -83,8 +85,12 @@ def load_match_events(match_id: int) -> pd.DataFrame:
 
 @st.cache_data(show_spinner="Loading shots...")
 def load_shots() -> pd.DataFrame:
-    """All shots of the season (the penalty shootout, period 5, is excluded)."""
-    return query(get_settings().processed_dir, SHOTS_SQL)
+    """All shots of the season (reads `shots.parquet` when prebuilt, else queries `events`)."""
+    processed_dir = get_settings().processed_dir
+    shots_path = processed_dir / SHOTS_FILE
+    if shots_path.exists():
+        return pd.read_parquet(shots_path)
+    return query(processed_dir, SHOTS_SQL)
 
 
 def match_label(row: pd.Series) -> str:

@@ -10,8 +10,9 @@ action-valuation models). Following `GEMINI.md §4`, the methodology progresses 
 | Layer | File | Role |
 |---|---|---|
 | **Metrics** | `src/statsbomb_analytics/metrics/similarity.py` | Feature matrix builder (`percentiles` / `zscore`), Euclidean & Cosine k-NN (`find_similar_players`), per-metric delta breakdown (`metric_deltas`), 7 domain tactical archetypes (`score_archetypes`), PCA biplot projection (`fit_pca_profile`) and K-Means clustering + diagnostics (`evaluate_kmeans_range`, `fit_kmeans_clusters`) |
+| **Deploy Subset** | `src/statsbomb_analytics/storage/deploy.py`, `scripts/phase4_build_deploy_subset.py` | Prebuilt `shots.parquet` + lightweight deploy bundle (~12 MB) preserving 100% of season/player/shot data and curated featured-match event files |
 | **App Page** | `app/pages/9_Similar_Players.py` | `Similar Players & Profiles` under **Player Analysis**: 3-tab workflow (`k-NN Player Similarity`, `Tactical Archetypes`, `PCA & K-Means Clustering`) with 1x1 `Barpolar` pizza overlay |
-| **Tests** | `tests/test_metrics_similarity.py`, `tests/test_app_smoke.py` | Unit tests for distance metrics, archetype weights, PCA variance and K-Means positional recovery, plus `AppTest` smoke tests |
+| **Tests** | `tests/test_metrics_similarity.py`, `tests/test_deploy_subset.py`, `tests/test_app_smoke.py` | Unit tests for distance metrics, archetype weights, PCA variance, K-Means positional recovery, deploy bundle builder and `AppTest` smoke tests |
 
 ## Decisions
 
@@ -22,6 +23,7 @@ action-valuation models). Following `GEMINI.md §4`, the methodology progresses 
 | D28 | **Domain Tactical Archetypes (`ARCHETYPES`) before K-Means:** 7 domain-defined roles (`Poacher & Box Finisher`, `Direct Winger & Ball Carrier`, `Chance Creator & Playmaker`, `Deep-Lying Progressor`, `Box-to-Box Engine`, `Ball-Winning Destroyer`, `Ball-Playing Defender & Stopper`) scored as weighted averages of percentiles. | Provides transparent, domain-grounded role scores (primary + secondary role per player) and serves as an external benchmark to evaluate unsupervised K-Means clusters. |
 | D29 | **PCA Biplot (`fit_pca_profile`):** Principal components fitted on unit-variance features with a deterministic sign convention (largest-magnitude loading oriented positive), plotting `PC1` vs `PC2` alongside top feature loading vectors and highlighting the target player + Top-K k-NN neighbours. | Connects local k-NN neighbourhoods in 19D space to the global 2D low-rank manifold. |
 | D30 | **K-Means Diagnostics (`evaluate_kmeans_range`, `fit_kmeans_clusters`):** Clusters are ordered deterministically by descending mean `vaep_p90`, labelled automatically by their top signature metrics, and evaluated across $k = 2 \dots 8$ via **Inertia (Elbow)**, **Silhouette**, **Adjusted Rand Index (ARI)** and **Normalized Mutual Information (NMI)** against both `position_group` and domain `archetype`. | Quantifies cluster separation and measures how closely unsupervised geometry aligns with football positions vs tactical roles. |
+| D31 | **Lightweight Deploy Subset (`storage/deploy.py`, `scripts/phase4_build_deploy_subset.py`):** Pre-exports `shots.parquet` (~1.2 MB, all 46k season shots) alongside `player_metrics.parquet` (1.2 MB) and `player_match_metrics.parquet` (6.2 MB), and copies event partitions only for $K$ featured matches per competition (default 3/league, ~3 MB). Single-match pages (`Match Report`, `Pass Network`, `Player Match Report`) automatically detect partial `events/` trees via `available_event_match_ids`. | Shrinks the processed footprint from **~385 MB** to **~12 MB** for cloud deployment while keeping 100% of season, match-log, shot-map, radar and similarity data intact. |
 
 ## Assumptions, Limitations and Risks
 
