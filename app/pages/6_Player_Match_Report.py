@@ -63,7 +63,9 @@ player_id = int(chosen_player["player_id"])
 player_name = str(chosen_player["player_name"])
 
 player_matches = (
-    in_team[in_team["player_id"] == player_id]
+    in_team[
+        (in_team["player_id"] == player_id) & (in_team["team_name"] == chosen_player["team_name"])
+    ]
     .sort_values("match_date", ascending=False)
     .reset_index(drop=True)
 )

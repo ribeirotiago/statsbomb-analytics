@@ -28,9 +28,16 @@ teams = [ALL_TEAMS, *sorted(in_league["team_name"].dropna().unique())]
 team = col2.selectbox("Team", teams)
 in_team = in_league if team == ALL_TEAMS else in_league[in_league["team_name"] == team]
 
+primary_pos = (
+    in_team.groupby(["player_id", "team_name", "position"], as_index=False)["minutes"]
+    .sum()
+    .sort_values(["minutes", "position"], ascending=[False, True])
+    .drop_duplicates(["player_id", "team_name"])[["player_id", "team_name", "position"]]
+)
 players = (
-    in_team.groupby(["player_id", "player_name", "team_name", "position"], as_index=False)
+    in_team.groupby(["player_id", "player_name", "team_name"], as_index=False)
     .agg(matches=("match_id", "nunique"), minutes=("minutes", "sum"))
+    .merge(primary_pos, on=["player_id", "team_name"], how="left")
     .sort_values(["player_name", "team_name"])
     .reset_index(drop=True)
 )
@@ -52,7 +59,7 @@ player_id = int(chosen["player_id"])
 player_name = str(chosen["player_name"])
 
 df_log = (
-    in_team[in_team["player_id"] == player_id]
+    in_team[(in_team["player_id"] == player_id) & (in_team["team_name"] == chosen["team_name"])]
     .sort_values(["match_date", "match_id"])
     .reset_index(drop=True)
 )

@@ -164,28 +164,34 @@ else:
         st.info("No player-match valuation rows found for this match.")
     else:
         st.markdown("#### Top 3 Players per Team by Method")
-        top_rows: list[dict[str, str]] = []
-        for method_label, col_name in MATCH_METHODS.items():
+        method_subtitles = {
+            "Singh xT": "Zone progression",
+            "xGChain": "Shot-ending chains",
+            "xGBuildup": "Build-up (no shot/assist)",
+            "Action xT": "Polynomial threat",
+            "VAEP": "ΔP(score) − ΔP(concede)",
+        }
+        method_cols = st.columns(len(MATCH_METHODS))
+        for m_col, (method_label, col_name) in zip(method_cols, MATCH_METHODS.items(), strict=True):
             top_by_team = match_top_contributors(m_df, col_name, n=3)
-            for rank_idx in range(3):
-                row_entry: dict[str, str] = {"Method": method_label, "Rank": f"#{rank_idx + 1}"}
-                for team_id, team_name in teams:
+            with m_col, st.container(border=True):
+                st.markdown(f"**{method_label}**")
+                st.caption(method_subtitles.get(method_label, ""))
+                for idx_t, (team_id, team_name) in enumerate(teams):
+                    if idx_t > 0:
+                        st.divider()
+                    badge = "🔵" if idx_t == 0 else "🔴"
+                    st.markdown(f"{badge} **{team_name}**")
                     t_top = top_by_team.get(team_id, pd.DataFrame())
-                    if len(t_top) > rank_idx:
-                        r = t_top.iloc[rank_idx]
-                        row_entry[team_name] = (
-                            f"{r['player_name']} ({r[col_name]:+.3f} · {r['minutes']:.0f}m)"
-                        )
+                    if t_top.empty:
+                        st.caption("—")
                     else:
-                        row_entry[team_name] = "—"
-                top_rows.append(row_entry)
-
-        st.dataframe(
-            pd.DataFrame(top_rows),
-            hide_index=True,
-            width="stretch",
-            height="content",
-        )
+                        lines = [
+                            f"{rank}. **{r.player_name}** · `{getattr(r, col_name):+.3f}` "
+                            f"({r.minutes:.0f}')"
+                            for rank, r in enumerate(t_top.itertuples(), start=1)
+                        ]
+                        st.markdown("\n".join(lines))
 
         st.markdown("#### All Match Players — Method Explorer")
         metric_options = {
